@@ -16,7 +16,8 @@ def load_mnist(type='train'):
         fd = open(os.path.join(data_dir, 'train-images.idx3-ubyte'))
         loaded = np.fromfile(file=fd, dtype=np.uint8)
         X = loaded[16:].reshape((60000, 28, 28, 1)).astype(np.float)
-        res_X = tf.convert_to_tensor(X / 255., tf.float32)
+        res_X = X / 255.
+        # res_X = tf.convert_to_tensor(X / 255., tf.float32)
         fd = open(os.path.join(data_dir, 'train-labels.idx1-ubyte'))
         loaded = np.fromfile(file=fd, dtype=np.uint8)
         res_Y = loaded[8:].reshape((60000, 1)).astype(np.int32)
