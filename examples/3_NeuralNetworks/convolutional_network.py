@@ -36,7 +36,6 @@ def conv_net(x_dict, n_classes, dropout, reuse, is_training):
     with tf.variable_scope('ConvNet', reuse=reuse):
         # TF Estimator input is a dict, in case of multiple inputs
         x = x_dict['images']
-
         # MNIST data input is a 1-D vector of 784 features (28*28 pixels)
         # Reshape to match picture format [Height x Width x Channel]
         # Tensor input become 4-D: [Batch Size, Height, Width, Channel]
@@ -85,15 +84,19 @@ def model_fn(features, labels, mode):
         return tf.estimator.EstimatorSpec(mode, predictions=pred_classes)
 
         # Define loss and optimizer
+    print(logits_train.shape)
+    print(labels.shape)
+
     loss_op = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(
         logits=logits_train, labels=tf.cast(labels, dtype=tf.int32)))
+    # tf.summary.scalar(name='loss', tensor=loss_op)
     optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
     train_op = optimizer.minimize(loss_op,
                                   global_step=tf.train.get_global_step())
 
     # Evaluate the accuracy of the model
     acc_op = tf.metrics.accuracy(labels=labels, predictions=pred_classes)
-
+    # merge_all_op = tf.summary.merge_all()
     # TF Estimators requires to return a EstimatorSpec, that specify
     # the different ops for training, evaluating, ...
     estim_specs = tf.estimator.EstimatorSpec(
@@ -107,8 +110,7 @@ def model_fn(features, labels, mode):
 
 
 # Build the Estimator
-model = tf.estimator.Estimator(model_fn)
-
+model = tf.estimator.Estimator(model_fn, model_dir='logdir')
 # Define the input function for training
 input_fn = tf.estimator.inputs.numpy_input_fn(
     x={'images': mnist.train.images}, y=mnist.train.labels,

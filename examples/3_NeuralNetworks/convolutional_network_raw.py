@@ -49,6 +49,8 @@ def maxpool2d(x, k=2):
 
 # Create model
 def conv_net(x, weights, biases, dropout):
+    print(x.shape)
+    print(weights['wc1'].shape)
     # MNIST data input is a 1-D vector of 784 features (28*28 pixels)
     # Reshape to match picture format [Height x Width x Channel]
     # Tensor input become 4-D: [Batch Size, Height, Width, Channel]
