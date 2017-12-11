@@ -20,7 +20,7 @@ import scipy.io as scio
 import numpy as np
 import math
 
-data = scio.loadmat('F:/dataSets/FaceChannel1/face_1_channel_XY.mat')
+data = scio.loadmat('F:/dataSets/FaceChannel1/face_1_channel_XY64.mat')
 
 '''
 To classify images using a bidirectional recurrent neural network, we consider
@@ -30,13 +30,13 @@ we will then handle 28 sequences of 28 steps for every sample.
 
 # Training Parameters
 learning_rate = 0.001
-training_steps = 10000
+training_steps = 100
 batch_size = 128
 display_step = 200
 
 # Network Parameters
-num_input = 128  # MNIST data input (img shape: 28*28)
-timesteps = 128  # timesteps
+num_input = 64  # MNIST data input (img shape: 28*28)
+timesteps = 64  # timesteps
 num_hidden = 128  # hidden layer num of features
 num_classes = 9  # MNIST total classes (0-9 digits)
 
@@ -55,22 +55,22 @@ biases = {
 
 
 def random_mini_batches(X, Y, mini_batch_size=64):
-    m = X.shape[1]
+    m = X.shape[0]
     mini_batches = []
 
     permutation = list(np.random.permutation(m))
-    shuffled_X = X[:, permutation]
-    shuffled_Y = Y[:, permutation]
+    shuffled_X = X[permutation, :]
+    shuffled_Y = Y[permutation, :]
 
     num_complete_minibatches = math.floor(m / mini_batch_size)
     for k in range(0, num_complete_minibatches):
-        mini_batch_X = shuffled_X[:, k * mini_batch_size: k * mini_batch_size + mini_batch_size]
-        mini_batch_Y = shuffled_Y[:, k * mini_batch_size: k * mini_batch_size + mini_batch_size]
+        mini_batch_X = shuffled_X[k * mini_batch_size: k * mini_batch_size + mini_batch_size, :]
+        mini_batch_Y = shuffled_Y[k * mini_batch_size: k * mini_batch_size + mini_batch_size, :]
         mini_batch = (mini_batch_X, mini_batch_Y)
         mini_batches.append(mini_batch)
     if m % mini_batch_size != 0:
-        mini_batch_X = shuffled_X[:, num_complete_minibatches * mini_batch_size: m]
-        mini_batch_Y = shuffled_Y[:, num_complete_minibatches * mini_batch_size: m]
+        mini_batch_X = shuffled_X[num_complete_minibatches * mini_batch_size: m, :]
+        mini_batch_Y = shuffled_Y[num_complete_minibatches * mini_batch_size: m, :]
         mini_batch = (mini_batch_X, mini_batch_Y)
         mini_batches.append(mini_batch)
     return mini_batches
@@ -121,17 +121,15 @@ with tf.Session() as sess:
     for step in range(1, training_steps + 1):
         minibatch_cost = 0.
         num_minibatches = int(1500 / batch_size)
-        minibatches = random_mini_batches(data['X'], data['Y'].T, batch_size)
+        minibatches = random_mini_batches(data['X'], data['Y'], batch_size)
 
         for minibatch in minibatches:
             (minibatch_X, minibatch_Y) = minibatch
-            print(minibatch_X.shape)
-            print(minibatch_Y.shape)
-            sess.run(train_op, feed_dict={X: minibatch_X, Y: minibatch_Y.T})
+            sess.run(train_op, feed_dict={X: minibatch_X.reshape([-1, 64, 64]), Y: minibatch_Y})
             if step % display_step == 0 or step == 1:
                 # Calculate batch loss and accuracy
-                loss, acc = sess.run([loss_op, accuracy], feed_dict={X: minibatch_X,
-                                                                     Y: minibatch_Y.T})
+                loss, acc = sess.run([loss_op, accuracy], feed_dict={X: minibatch_X.reshape([-1, 64, 64]),
+                                                                     Y: minibatch_Y})
                 print("Step " + str(step) + ", Minibatch Loss= " + "{:.4f}".format(loss) + ", Training Accuracy= " + \
                       "{:.3f}".format(acc))
 
@@ -139,4 +137,4 @@ with tf.Session() as sess:
 
     # Calculate accuracy for 128 mnist test images
 
-    print("Testing Accuracy:", sess.run(accuracy, feed_dict={X: data['X'], Y: data['Y'].T}))
+    print("Testing Accuracy:", sess.run(accuracy, feed_dict={X: data['X'].reshape([-1, 64, 64]), Y: data['Y']}))
